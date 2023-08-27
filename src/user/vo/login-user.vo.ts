@@ -5,7 +5,7 @@ export interface UserInfo {
   /**
    * 用户ID
    */
-  id: number | string;
+  id: number;
 
   /**
    * 用户名

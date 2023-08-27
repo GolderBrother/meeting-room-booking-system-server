@@ -8,7 +8,7 @@ import {
   Body,
   UnauthorizedException,
 } from '@nestjs/common';
-import { RegisterUserDto } from './dto/register-user-dto';
+import { RegisterUserDto } from './dto/register-user.dto';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -22,7 +22,9 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { UserInfo, LoginUserVo } from './vo/login-user.vo';
 import { ConfigService } from '@nestjs/config';
 import e from 'express';
-
+import { UserDetailVo } from './vo/user-info.vo';
+import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 @Injectable()
 export class UserService {
   private logger = new Logger();
@@ -253,7 +255,7 @@ export class UserService {
     console.log('findUserById userId', userId);
     const user = await this.userRepository.findOne({
       where: {
-        id: String(userId),
+        id: userId,
         isAdmin,
       },
     });
@@ -276,5 +278,123 @@ export class UserService {
         return arr;
       }, []),
     };
+  }
+
+  private getUserDetailVo(user: User) {
+    const vo = new UserDetailVo();
+    vo.id = user.id;
+    vo.email = user.email;
+    vo.username = user.username;
+    vo.headPic = user.headPic;
+    vo.phoneNumber = user.phoneNumber;
+    vo.nickName = user.nickName;
+    vo.createTime = user.createTime;
+    vo.isFrozen = user.isFrozen;
+    return vo;
+  }
+
+  async findUserDetailById(userId: number) {
+    console.log('findUserDetailById userId', userId);
+    const user = await this.userRepository.findOne({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user) {
+      throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
+    }
+    const vo = this.getUserDetailVo(user);
+    return vo;
+  }
+
+  async updatePassword(userId: number, passwordDto: UpdateUserPasswordDto) {
+    const captcha = await this.redisService.get(
+      `update_password_captcha_${passwordDto.email}`,
+    );
+
+    // 验证码已失效
+    if (!captcha) {
+      throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
+    }
+
+    // 验证码不正确
+    if (passwordDto.captcha !== captcha) {
+      throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
+    }
+
+    const foundUser = await this.userRepository.findOneBy({
+      id: userId,
+    });
+    foundUser.password = md5(passwordDto.password);
+
+    // 先查询 redis 中有相对应的验证码，检查通过之后根据 id 查询用户信息，修改密码之后 save。
+    // TODO
+
+    try {
+      await this.userRepository.save(foundUser);
+      return '密码修改成功';
+    } catch (e) {
+      this.logger.error(e, UserService);
+      return '密码修改失败';
+    }
+  }
+
+  async updatePasswordCaptcha(address: string) {
+    const code = Math.random().toString().slice(2, 8);
+    await this.redisService.set(
+      `update_password_captcha_${address}`,
+      code,
+      10 * 60,
+    );
+
+    await this.emailService.sendMail({
+      to: address,
+      subject: '更改密码验证码',
+      html: `<p>你的更改密码验证码是 ${code}</p>`,
+    });
+  }
+
+  async update(userId: number, updateUserDto: UpdateUserDto) {
+    const captcha = await this.redisService.get(
+      `update_user_captcha_${updateUserDto.email}`,
+    );
+
+    // 验证码已失效
+    if (!captcha) {
+      throw new HttpException('验证码已失效', HttpStatus.BAD_REQUEST);
+    }
+
+    // 验证码不正确
+    if (updateUserDto.captcha !== captcha) {
+      throw new HttpException('验证码不正确', HttpStatus.BAD_REQUEST);
+    }
+    const foundUser = await this.userRepository.findOneBy({
+      id: userId,
+    });
+    if (updateUserDto.nickName) {
+      foundUser.nickName = updateUserDto.nickName;
+    }
+    if (updateUserDto.headPic) {
+      foundUser.headPic = updateUserDto.headPic;
+    }
+
+    try {
+      await this.userRepository.save(foundUser);
+      return '用户信息修改成功';
+    } catch (error) {
+      this.logger.error(e, UserService);
+      return '用户信息修改失败';
+    }
+  }
+
+  async updateCaptcha(address: string) {
+    const code = Math.random().toString().slice(2, 8);
+    await this.redisService.set(`update_user_captcha_${address}`, code, 5 * 60);
+    await this.emailService.sendMail({
+      to: address,
+      html: `<p>你的注册验证码是 ${code}</p>`,
+      subject: '更改用户信息验证码',
+    });
+    return '发送成功';
   }
 }

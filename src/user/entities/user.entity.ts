@@ -14,7 +14,7 @@ import { Role } from './role.entity';
 })
 export class User {
   @PrimaryGeneratedColumn()
-  id: string;
+  id: number;
 
   @Column({
     length: 50,
