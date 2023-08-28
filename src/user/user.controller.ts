@@ -3,6 +3,8 @@ import { UserService } from './user.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto, RefreshTokenDto } from './dto/login-user.dto';
 import { RequireLogin, UserInfo } from 'src/decorator/custom.decorator';
+import { generateParseIntPipe } from 'src/utils';
+
 import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -82,5 +84,30 @@ export class UserController {
   @Get('update/captcha')
   async updateCaptcha(@Query('address') address: string) {
     return await this.userService.updateCaptcha(address);
+  }
+
+  @Post('freeze')
+  async freeze(@Query('id') userId: number) {
+    return await this.userService.freezeUserById(userId);
+  }
+
+  @Get('list')
+  async list(
+    @Query('username') username: string,
+    @Query('nickName') nickName: string,
+    @Query('email') email: string,
+    @Query('pageNo', generateParseIntPipe('pageNo'))
+    pageNo: number,
+    @Query('pageSize', generateParseIntPipe('pageNo'))
+    pageSize: number,
+  ) {
+    // TODO 应该还支持模糊查询等
+    return await this.userService.findUsersByPage(
+      username,
+      nickName,
+      email,
+      pageNo,
+      pageSize,
+    );
   }
 }

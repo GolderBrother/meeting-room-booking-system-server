@@ -9,7 +9,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { RegisterUserDto } from './dto/register-user.dto';
-import { Repository } from 'typeorm';
+import { Like, Repository, FindOperator } from 'typeorm';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RedisService } from 'src/redis/redis.service';
@@ -396,5 +396,61 @@ export class UserService {
       subject: '更改用户信息验证码',
     });
     return '发送成功';
+  }
+
+  async freezeUserById(id: number) {
+    const user = await this.userRepository.findOneBy({
+      id,
+    });
+
+    if (!user) {
+      throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
+    }
+
+    user.isFrozen = true;
+
+    await this.userRepository.save(user);
+
+    return '冻结成功';
+  }
+
+  async findUsersByPage(
+    username: string,
+    nickName: string,
+    email: string,
+    pageNo: number,
+    pageSize: number,
+  ) {
+    const condition: Record<string, string | number | FindOperator<string>> =
+      {};
+    if (username !== null) {
+      condition.username = Like(`%${username}%`);
+    }
+    if (nickName !== null) {
+      condition.nickName = Like(`%${username}%`);
+    }
+    if (email !== null) {
+      condition.email = Like(`%${username}%`);
+    }
+    const skipCont = (pageNo - 1) * pageSize;
+    const [users, total] = await this.userRepository.findAndCount({
+      select: [
+        'id',
+        'username',
+        'nickName',
+        'email',
+        'phoneNumber',
+        'isFrozen',
+        'headPic',
+        'createTime',
+      ],
+      skip: skipCont,
+      take: pageSize,
+    });
+
+    return {
+      users,
+      total,
+    };
   }
 }
