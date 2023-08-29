@@ -21,8 +21,10 @@ import { md5 } from 'src/utils';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UserInfo, LoginUserVo } from './vo/login-user.vo';
 import { ConfigService } from '@nestjs/config';
-import e from 'express';
 import { UserDetailVo } from './vo/user-info.vo';
+import { RefreshTokenVo } from './vo/refresh-token.vo';
+import { UserListVo } from './vo/user-list.vo';
+
 import { UpdateUserPasswordDto } from './dto/update-user-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 @Injectable()
@@ -201,7 +203,7 @@ export class UserService {
       await this.userRepository.save(newUser);
       return '注册成功';
     } catch (error) {
-      this.logger.error(e, UserService);
+      this.logger.error(error, UserService);
       return '注册失败';
     }
   }
@@ -222,12 +224,11 @@ export class UserService {
       console.log('refreshToken refreshTokenStr', refreshTokenStr);
       const data = this.jwtService.verify(refreshTokenStr);
       const user = await this.findUserById(data.userId, false);
-
       const { accessToken, refreshToken } = this.generateJWTToken(user);
-      return {
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      };
+      const vo = new RefreshTokenVo();
+      vo.access_token = accessToken;
+      vo.refresh_token = refreshToken;
+      return vo;
     } catch (error) {
       this.logger.error(error, UserService);
       throw new UnauthorizedException('token 已失效，请重新登录');
@@ -238,13 +239,12 @@ export class UserService {
     try {
       console.log('adminRefreshToken refreshTokenStr', refreshTokenStr);
       const data = this.jwtService.verify(refreshTokenStr);
-      const user = await this.findUserById(data.userId, false);
-
+      const user = await this.findUserById(data.userId, true);
       const { accessToken, refreshToken } = this.generateJWTToken(user);
-      return {
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      };
+      const vo = new RefreshTokenVo();
+      vo.access_token = accessToken;
+      vo.refresh_token = refreshToken;
+      return vo;
     } catch (error) {
       this.logger.error(error, UserService);
       throw new UnauthorizedException('token 已失效，请重新登录');
@@ -333,8 +333,8 @@ export class UserService {
     try {
       await this.userRepository.save(foundUser);
       return '密码修改成功';
-    } catch (e) {
-      this.logger.error(e, UserService);
+    } catch (error) {
+      this.logger.error(error, UserService);
       return '密码修改失败';
     }
   }
@@ -352,6 +352,7 @@ export class UserService {
       subject: '更改密码验证码',
       html: `<p>你的更改密码验证码是 ${code}</p>`,
     });
+    return '发送成功';
   }
 
   async update(userId: number, updateUserDto: UpdateUserDto) {
@@ -382,7 +383,7 @@ export class UserService {
       await this.userRepository.save(foundUser);
       return '用户信息修改成功';
     } catch (error) {
-      this.logger.error(e, UserService);
+      this.logger.error(error, UserService);
       return '用户信息修改失败';
     }
   }
@@ -447,10 +448,10 @@ export class UserService {
       skip: skipCont,
       take: pageSize,
     });
+    const vo = new UserListVo();
+    vo.users = users;
+    vo.total = total;
 
-    return {
-      users,
-      total,
-    };
+    return vo;
   }
 }

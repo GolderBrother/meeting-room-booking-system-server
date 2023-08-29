@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
- * 用户详情视图对象
+ * 用户视图对象
  */
-export class UserDetailVo {
+class User {
   /**
    * 用户ID
    */
@@ -13,31 +13,25 @@ export class UserDetailVo {
   /**
    * 用户名
    */
-  @ApiProperty({ example: 'zhangsan' })
+  @ApiProperty()
   username: string;
 
   /**
    * 昵称
    */
-  @ApiProperty({ example: '张三' })
+  @ApiProperty()
   nickName: string;
 
   /**
    * 邮箱
    */
-  @ApiProperty({ example: 'xx@xx.com' })
+  @ApiProperty()
   email: string;
-
-  /**
-   * 头像
-   */
-  @ApiProperty({ example: 'xxx.png' })
-  headPic: string;
 
   /**
    * 手机号码
    */
-  @ApiProperty({ example: '13233333333' })
+  @ApiProperty()
   phoneNumber: string;
 
   /**
@@ -47,8 +41,33 @@ export class UserDetailVo {
   isFrozen: boolean;
 
   /**
+   * 头像
+   */
+  @ApiProperty()
+  headPic: string;
+
+  /**
    * 创建时间
    */
   @ApiProperty()
   createTime: Date;
+}
+
+/**
+ * 用户列表视图对象
+ */
+export class UserListVo {
+  /**
+   * 用户列表
+   */
+  @ApiProperty({
+    type: [User],
+  })
+  users: User[];
+
+  /**
+   * 用户总数
+   */
+  @ApiProperty()
+  total: number;
 }

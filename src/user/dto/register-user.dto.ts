@@ -1,5 +1,7 @@
 import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
 
+import { ApiProperty } from '@nestjs/swagger';
+
 /**
  * 注册用户数据传输对象
  */
@@ -10,6 +12,7 @@ export class RegisterUserDto {
   @IsNotEmpty({
     message: '用户名不能为空',
   })
+  @ApiProperty()
   username: string;
 
   /**
@@ -18,6 +21,7 @@ export class RegisterUserDto {
   @IsNotEmpty({
     message: '昵称不能为空',
   })
+  @ApiProperty()
   nickName: string;
 
   /**
@@ -29,6 +33,7 @@ export class RegisterUserDto {
   @MinLength(6, {
     message: '密码不能少于 6 位',
   })
+  @ApiProperty()
   password: string;
 
   /**
@@ -43,6 +48,7 @@ export class RegisterUserDto {
       message: '邮箱格式不合法',
     },
   )
+  @ApiProperty()
   email: string;
 
   /**
@@ -51,5 +57,6 @@ export class RegisterUserDto {
   @IsNotEmpty({
     message: '验证码不能为空',
   })
+  @ApiProperty()
   captcha: string;
 }
