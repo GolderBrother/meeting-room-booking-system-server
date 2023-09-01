@@ -1,9 +1,21 @@
-import { Body, Controller, Get, Post, Query, HttpStatus } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  HttpStatus,
+  UploadedFile,
+  UseInterceptors,
+  BadRequestException,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto, RefreshTokenDto } from './dto/login-user.dto';
 import { RequireLogin, UserInfo } from 'src/decorator/custom.decorator';
 import { generateParseIntPipe } from 'src/utils';
+import { storage } from 'src/utils/file-storage';
+
 import {
   ApiTags,
   ApiQuery,
@@ -19,6 +31,9 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { LoginUserVo } from './vo/login-user.vo';
 import { RefreshTokenVo } from './vo/refresh-token.vo';
 import { UserListVo } from './vo/user-list.vo';
+import { FileInterceptor } from '@nestjs/platform-express';
+import * as path from 'path';
+
 @ApiTags('用户管理模块')
 @Controller('user')
 export class UserController {
@@ -146,7 +161,6 @@ export class UserController {
     return this.userService.findUserDetailById(userId);
   }
 
-  @ApiBearerAuth()
   @ApiBody({
     type: UpdateUserPasswordDto,
   })
@@ -155,16 +169,11 @@ export class UserController {
     description: '密码修改成功/密码修改失败',
   })
   @Post(['update_password', 'admin/update_password'])
-  @RequireLogin()
-  async updatePassword(
-    @UserInfo('userId') userId: number,
-    @Body() updatePasswordDto: UpdateUserPasswordDto,
-  ) {
+  async updatePassword(@Body() updatePasswordDto: UpdateUserPasswordDto) {
     console.log('updatePasswordDto', updatePasswordDto);
-    return this.userService.updatePassword(userId, updatePasswordDto);
+    return this.userService.updatePassword(updatePasswordDto);
   }
 
-  @ApiBearerAuth()
   @ApiQuery({
     name: 'address',
     description: '邮箱地址',
@@ -174,7 +183,6 @@ export class UserController {
     type: String,
     description: '发送成功',
   })
-  @RequireLogin()
   @Get('update_password/captcha')
   async updatePasswordCaptcha(@Query('address') address: string) {
     return await this.userService.updatePasswordCaptcha(address);
@@ -197,9 +205,15 @@ export class UserController {
     return await this.userService.update(userId, updateUserDto);
   }
 
+  @ApiBearerAuth()
+  @ApiResponse({
+    type: String,
+    description: '发送成功',
+  })
+  @RequireLogin()
   @Get('update/captcha')
-  async updateCaptcha(@Query('address') address: string) {
-    return await this.userService.updateCaptcha(address);
+  async updateCaptcha(@UserInfo('email') email: string) {
+    return await this.userService.updateCaptcha(email);
   }
 
   @ApiBearerAuth()
@@ -269,5 +283,28 @@ export class UserController {
       pageNo,
       pageSize,
     );
+  }
+
+  @Post('upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      dest: 'uploads',
+      storage,
+      limits: {
+        fileSize: 3 * 1024 * 1024,
+      },
+      fileFilter(req, file, callback) {
+        const extname = path.extname(file.originalname);
+        const isImageFile = ['.png', '.jpg', '.gif', '.webp'].includes(extname);
+        if (isImageFile) {
+          callback(null, true);
+        } else {
+          callback(new BadRequestException('只能上传图片'), false);
+        }
+      },
+    }),
+  )
+  uploadFile(@UploadedFile() file: Express.Multer.File) {
+    return this.userService.uploadFile(file);
   }
 }

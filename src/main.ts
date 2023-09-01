@@ -7,9 +7,10 @@ import { InvokeRecordInterceptor } from './interceptor/invoke-record.interceptor
 import { UnLoginFilter } from './filter/unlogin.filter';
 import { CustomExceptionFilter } from './filter/custom-exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // 全局启用 ValidationPipe
   app.useGlobalPipes(new ValidationPipe());
@@ -19,6 +20,11 @@ async function bootstrap() {
   app.useGlobalFilters(new UnLoginFilter());
   // 全局异常捕获处理
   app.useGlobalFilters(new CustomExceptionFilter());
+  // 开启cors允许跨域
+  app.enableCors();
+  app.useStaticAssets('uploads', {
+    prefix: '/uploads',
+  });
 
   // swagger文档
   const config = new DocumentBuilder()

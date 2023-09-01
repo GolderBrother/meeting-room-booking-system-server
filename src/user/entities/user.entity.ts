@@ -19,6 +19,8 @@ export class User {
   @Column({
     length: 50,
     comment: '用户名',
+    // 给 username 添加唯一约束
+    unique: true,
   })
   username: string;
 

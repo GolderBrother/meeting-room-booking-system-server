@@ -119,6 +119,7 @@ export class UserService {
       {
         userId: userInfo.id,
         username: userInfo.username,
+        email: userInfo.email,
         roles: userInfo.roles,
         permissions: userInfo.permissions,
       },
@@ -267,6 +268,7 @@ export class UserService {
     return {
       id: user.id,
       username: user.username,
+      email: user.email,
       isAdmin: user.isAdmin,
       roles: roles.map((item) => item.name),
       permissions: roles.reduce((arr, item) => {
@@ -307,7 +309,7 @@ export class UserService {
     return vo;
   }
 
-  async updatePassword(userId: number, passwordDto: UpdateUserPasswordDto) {
+  async updatePassword(passwordDto: UpdateUserPasswordDto) {
     const captcha = await this.redisService.get(
       `update_password_captcha_${passwordDto.email}`,
     );
@@ -323,8 +325,13 @@ export class UserService {
     }
 
     const foundUser = await this.userRepository.findOneBy({
-      id: userId,
+      username: passwordDto.username,
     });
+
+    if (foundUser.email !== passwordDto.email) {
+      throw new HttpException('邮箱不正确', HttpStatus.BAD_REQUEST);
+    }
+
     foundUser.password = md5(passwordDto.password);
 
     // 先查询 redis 中有相对应的验证码，检查通过之后根据 id 查询用户信息，修改密码之后 save。
@@ -388,11 +395,11 @@ export class UserService {
     }
   }
 
-  async updateCaptcha(address: string) {
+  async updateCaptcha(email: string) {
     const code = Math.random().toString().slice(2, 8);
-    await this.redisService.set(`update_user_captcha_${address}`, code, 5 * 60);
+    await this.redisService.set(`update_user_captcha_${email}`, code, 5 * 60);
     await this.emailService.sendMail({
-      to: address,
+      to: email,
       html: `<p>你的注册验证码是 ${code}</p>`,
       subject: '更改用户信息验证码',
     });
@@ -453,5 +460,10 @@ export class UserService {
     vo.total = total;
 
     return vo;
+  }
+
+  uploadFile(file: Express.Multer.File) {
+    console.log('file', file);
+    return file.path;
   }
 }

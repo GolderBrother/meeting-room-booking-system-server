@@ -20,6 +20,7 @@ declare module 'express' {
 
 interface JwtUserData {
   userId: number;
+  email: string;
   username: string;
   roles: string[];
   permissions: Permission[];
@@ -59,6 +60,7 @@ export class LoginGuard implements CanActivate {
       // 登录的user信息存起来
       request.user = {
         userId: data.userId,
+        email: data.email,
         username: data.username,
         roles: data.roles,
         permissions: data.permissions,
