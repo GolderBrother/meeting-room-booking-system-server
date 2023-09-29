@@ -363,6 +363,7 @@ export class UserService {
   }
 
   async update(userId: number, updateUserDto: UpdateUserDto) {
+    console.log('userId', userId);
     const captcha = await this.redisService.get(
       `update_user_captcha_${updateUserDto.email}`,
     );

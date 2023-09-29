@@ -213,6 +213,7 @@ export class UserController {
   @RequireLogin()
   @Get('update/captcha')
   async updateCaptcha(@UserInfo('email') email: string) {
+    console.log('updateCaptcha email', email);
     return await this.userService.updateCaptcha(email);
   }
 
