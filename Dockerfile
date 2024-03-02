@@ -13,7 +13,8 @@ COPY package.json .
 
 RUN npm config set registry https://registry.npmmirror.com/
 
-RUN npm install
+# RUN npm install
+RUN npm install --force
 
 COPY . .
 
@@ -35,7 +36,8 @@ WORKDIR /app
 RUN npm config set registry https://registry.npmmirror.com/
 
 # 安装生产环境的依赖
-RUN npm install --production
+# RUN npm install --production
+RUN npm install --production --force
 
 EXPOSE 3005
 
