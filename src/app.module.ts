@@ -17,6 +17,7 @@ import { MeetingRoomModule } from './meeting-room/meeting-room.module';
 import { MeetingRoom } from './meeting-room/entities/meeting-room.entity';
 import { BookingModule } from './booking/booking.module';
 import { Booking } from './booking/entities/booking.entity';
+import * as path from 'path';
 
 @Module({
   imports: [
@@ -34,7 +35,10 @@ import { Booking } from './booking/entities/booking.entity';
     }),
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: 'src/.env',
+      // 开发环境下
+      // envFilePath: 'src/.env',
+      // 生产环境下：因为 build 出来的代码没有 src 目录，是直接放在 dist 下的
+      envFilePath: path.join(__dirname, '.env'),
     }),
     TypeOrmModule.forRootAsync({
       useFactory(configService: ConfigService) {

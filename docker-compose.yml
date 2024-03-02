@@ -1,0 +1,36 @@
+version: '3.8'
+services:
+# nest服务
+# nest-app 依赖 redis-container 和 mysql-container，因此下面两个环境依赖服务需要先启动
+  nest-app:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    depends_on:
+      - mysql-container
+      - redis-container
+    ports:
+      - 3005:3005
+    networks:
+# 三个容器放到同一个桥接网络里 common-network
+      - common-network
+# mysql服务
+  mysql-container:
+    image: mysql
+    volumes:
+      - /Users/zhangyaohuang/Desktop/james/self/mysql⁠:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: meeting_room_booking_system
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - common-network
+# redis服务 
+  redis-container:
+    image: redis
+    volumes:
+      - /Users/zhangyaohuang/Desktop/james/self/redis⁠:/data
+    networks:
+      - common-network
+networks:
+  common-network:
+    driver: bridge

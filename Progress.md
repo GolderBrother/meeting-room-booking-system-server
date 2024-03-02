@@ -12,3 +12,6 @@
 - 08-30
   - 会议室预订系统：用户管理模块-- 用户端信息修改页面
   - https://juejin.cn/book/7226988578700525605/section/7265871449024856064?enter_from=course_center&utm_source=course_center
+- 2024-01-19
+  - 会议室预订系统：预定管理模块-后端开发
+  - https://juejin.cn/book/7226988578700525605/section/7236155922546950201?enter_from=course_center&utm_source=course_center
