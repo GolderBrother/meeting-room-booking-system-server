@@ -6,6 +6,7 @@ services:
     build:
       context: ./
       dockerfile: ./Dockerfile
+    # nest-app 依赖 redis-container 和 mysql-container
     depends_on:
       - mysql-container
       - redis-container
@@ -33,6 +34,7 @@ services:
       - /Users/james/redis-data:/data
     networks:
       - common-network
+# 三个容器放到同一个桥接网络里。
 networks:
   common-network:
     driver: bridge
