@@ -18,7 +18,8 @@ services:
   mysql-container:
     image: mysql
     volumes:
-      - /Users/zhangyaohuang/Desktop/james/self/mysql⁠:/var/lib/mysql
+      # - /Users/zhangyaohuang/Desktop/james/self/mysql⁠:/var/lib/mysql
+      - /Users/james/mysql-data:/var/lib/mysql
     environment:
       MYSQL_DATABASE: meeting_room_booking_system
       MYSQL_ROOT_PASSWORD: root
@@ -28,7 +29,8 @@ services:
   redis-container:
     image: redis
     volumes:
-      - /Users/zhangyaohuang/Desktop/james/self/redis⁠:/data
+      # - /Users/zhangyaohuang/Desktop/james/self/redis⁠:/data
+      - /Users/james/redis-data:/data
     networks:
       - common-network
 networks:
